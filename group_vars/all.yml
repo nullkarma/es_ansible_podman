@@ -1,0 +1,22 @@
+---
+ansible_user: 'hmueller'
+ansible_remote_user: '{{ ansible_user }}'
+
+# used by env_file in containers
+http_proxy: ''
+https_proxy: ''
+no_proxy: '127.0.0.1/8'
+
+# used by ansible tasks
+proxy_env:
+  http_proxy: '{{ http_proxy }}'
+  https_proxy: '{{ https_proxy }}'
+  no_proxy: '{{ no_proxy }}'
+
+podman_user: 'elastic'
+
+elastic_user: '{{ podman_user }}'
+elastic_conf_dir: '/var/lib/elastic/config'
+elastic_data_dir: '/var/lib/elastic/data'
+vault_xpack_http_ssl_keystore_password: ''
+vault_xpack_transport_ssl_keystore_password: ''

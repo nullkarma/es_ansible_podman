@@ -1,0 +1,8 @@
+---
+
+- name: 'Elastic search stack'
+  hosts: ['elastic_hosts']
+  become: true
+  roles:
+   - 'elasticsearch'
+

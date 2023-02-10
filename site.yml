@@ -1,0 +1,3 @@
+---
+- import_playbook: virtual_machine.yml
+- import_playbook: elastic.yml

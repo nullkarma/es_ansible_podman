@@ -1,0 +1,11 @@
+---
+#
+# This playbook prepares virtual machines for podman
+# containers
+#
+- name: 'Podman Virtual Machine'
+  hosts: 'all'
+  become: true
+  roles:
+    - 'podman_rootless'
+

@@ -1,0 +1,29 @@
+---
+- name: 'Install podman package'
+  ansible.builtin.package:
+    name: 'podman'
+
+- name: 'Setup registry search list'
+  ansible.builtin.copy:
+    src: 'search.conf'
+    dest: '/etc/containers/registries.conf.d/search.conf'
+    mode: '0644'
+
+- name: 'Ensure group for podman exists'
+  ansible.builtin.group:
+    name: '{{ podman_group }}'
+    system: false
+
+- name: 'Ensure group for podman exists with correct gid'
+  ansible.builtin.user:
+    name: '{{ podman_user }}'
+    group: '{{ podman_group }}'
+    create_home: true
+    home: '{{ podman_home }}'
+    password: '!'
+    system: false
+
+- name: 'Enable lingering for podman user'
+  ansible.builtin.command:
+    cmd: 'loginctl enable-linger {{ podman_user }}'
+    creates: '/var/lib/systemd/linger/{{ podman_user }}'

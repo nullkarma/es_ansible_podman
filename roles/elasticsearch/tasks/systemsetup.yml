@@ -1,0 +1,10 @@
+---
+- name: Adding sysctl config
+  ansible.builtin.copy:
+    src: 'sysctl_elastic.conf'
+    dest: '/etc/sysctl.d/elastic.conf'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  notify: 'Reload sysctl'
+#- name: Setup elastic user limits
