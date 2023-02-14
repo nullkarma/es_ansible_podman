@@ -3,14 +3,20 @@
 elastic_user: 'elastic'
 elastic_group: '{{ elastic_user }}'
 
+# pam limits for elastic user
+elastic_system_limits:
+  - ['soft', 'nofile', '1024000']
+  - ['hard', 'nofile', '1024000']
+  - ['soft', 'memlock', 'unlimited']
+  - ['hard', 'memlock', 'unlimited']
+
 # defaults file for elasticsearch
-state: 'started'
-recreate: false
+elastic_systemd_state: 'started'
+elastic_systemd_recreate: false
+elastic_systemd_timeout: '30'
 timezone: 'Europe/Berlin'
 
 # persistent directories
-elastic_config: '{{ elastic_conf_dir }}/{{ inventory_hostname_short }}.es_{{ elastic.instance_name }}'
-elastic_data: '{{ elastic_data_dir }}/{{ inventory_hostname_short }}.es_{{ elastic.instance_name }}'
 elastic_snapshot_repository: '/mnt/snapshot-repository'
 elastic_snapshot_enabled: false
 
@@ -24,6 +30,10 @@ elastic_image_version: '8.6.1'
 
 # cluster settings
 elastic_cluster_name: 'example.com'
+
+# number of instances per host
+elastic_host_instances: '3'
+
 monitoring_cluster: true
 monitoring_data_history: '3d'
 

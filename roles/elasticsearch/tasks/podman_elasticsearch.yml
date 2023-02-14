@@ -1,50 +1,90 @@
 ---
-- name: Create pod for elasticsearch
-  containers.podman.podman_pod:
-    name: '{{ pod_name }}'
-    hostname: '{{ inventory_hostname_short }}.es_{{ elastic.instance_name }}'
-    state: '{{ state }}'
-    recreate: '{{ recreate }}'
-    network: '{{ elastic_pod_network }}'
-  when: elastic_pod_network != "bridge"
+# variables needed
+# elastic_instance_number
+- name: 'Set variable names for elastic pods'
+  ansible.builtin.set_fact:
+    elastic_pod_name: >-
+      elasticsearch_{{ inventory_hostname_short }}_{{ elastic_instance_number }}
+    elastic_container_name: >-
+      {{ inventory_hostname_short }}_{{ elastic_instance_number }}
+    elastic_pod_hostname: >-
+      {{ inventory_hostname_short }}-es-{{
+         elastic_instance_number }}.{{ domainname }}
+    elastic_config: >-
+      {{ elastic_conf_dir }}/{{
+         inventory_hostname_short }}_{{ elastic_instance_number }}
+    elastic_data: >-
+      {{ elastic_data_dir }}/{{
+         inventory_hostname_short }}_{{ elastic_instance_number }}
 
-- name: Create pod for elasticsearch
+- name: Create persistent directories for Elasticsearch
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: directory
+    owner: '{{ elastic_user }}'
+    mode: '0755'
+  loop:
+    - '{{ elastic_data }}/data'
+    - '{{ elastic_data }}/logs'
+    - '{{ elastic_data }}/snapshots'
+    - '{{ elastic_config }}/certs'
+    - '{{ elastic_config }}/config'
+
+- name: Generate elasticsearch.yml for node
+  template:
+    src: '{{ item }}.j2'
+    dest: '{{ elastic_config }}/config/{{ item }}'
+    mode: '0644'
+    owner: '{{ elastic_user }}'
+    group: '{{ elastic_group }}'
+  loop:
+    - elasticsearch.yml
+
+- name: 'Place elasticsearch logging config into the config directory'
+  copy:
+    src: '{{ item }}'
+    dest: '{{ elastic_config }}/config/{{ item }}'
+    mode: '0644'
+    owner: '{{ elastic_user }}'
+    group: '{{ elastic_group }}'
+  loop:
+    - log4j2.properties
+
+- name: 'Create pod for elasticsearch'
+  become: true
+  become_user: '{{ elastic_user }}'
   containers.podman.podman_pod:
-    name: '{{ pod_name }}'
-    hostname: '{{ inventory_hostname_short }}.es_{{ elastic.instance_name }}'
-    state: '{{ state }}'
-    recreate: '{{ recreate }}'
-    network: '{{ elastic_pod_network }}'
+    name: '{{ elastic_pod_name }}'
+    hostname: '{{ elastic_pod_hostname }}'
+    state: '{{ elastic_systemd_state }}'
+    recreate: '{{ elastic_systemd_recreate }}'
     publish:
-      - '{{ elastic.ip_address }}:{{ elastic.ports[0] }}:{{ elastic.ports[0] }}'
-      - '{{ elastic.ip_address }}:{{ elastic.ports[1] }}:{{ elastic.ports[1] }}'
-  when: elastic_pod_network == "bridge"
+      - '{{ 9200 + elastic_instance_number }}:9200'
+      - '{{ 9300 + elastic_instance_number }}:9200'
 
 - name: Run Elastic container
+  become: true
+  become_user: '{{ elastic_user }}'
   containers.podman.podman_container:
-    name: '{{ inventory_hostname_short }}.es_{{ elastic.instance_name }}'
-    pod: '{{ pod_name }}'
+    pod: '{{ elastic_pod_name }}'
+    name: '{{ elastic_container_name }}'
     image: '{{ elastic_image }}:{{ elastic_image_version }}'
-    state: started
-    stop_timeout: 90
-    recreate: '{{ recreate }}'
-    network: '{{ elastic_pod_network }}'
-    ## by default log4j2.properties is used plus filebeat
-    # log_driver: k8s-file
-    # log_opt:
-    #   path: "{{ elastic_data }}/logs/elasticsearch-container.log"
-    #   max_size: 300mb
-    # # log driver to journald (where syslog-ng can pick-up)
-    # log_driver: journald
-    # log_opt:
-    #   tag=elastic|{{ '{{' }}.ImageName{{ '}}' }}|podman
+    state: 'started'
+    stop_timeout: '90'
+    recreate: '{{ elastic_systemd_recreate }}'
     label:
-      process: elasticsearch
-    ulimit:
-      - 'memlock=-1:-1'
-    expose: '{{ elastic.ports }}'
-    memory: '{{ elastic.memory_limit }}'
-    cpus: '{{ elastic.cpu_limit }}'
+      process: 'elasticsearch'
+    volume:
+      - '{{ elastic_data }}/logs:/usr/share/elasticsearch/logs:rw'
+      - '{{ elastic_data }}/data:/usr/share/elasticsearch/data:rw'
+      - '{{ elastic_data }}/snapshots:{{ elastic_snapshot_repository }}'
+      - '{{ elastic_config }}/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro'
+      - '{{ elastic_config }}/config/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties:ro'
+      - '{{ elastic_config }}/certs:/usr/share/elasticsearch/config/certificates:ro'
+    # ulimit:
+    #   - 'memlock=-1:-1'
+    # memory: '{{ elastic.memory_limit }}'
+    #    cpus: '{{ elastic.cpu_limit }}'
     env:
       TZ: '{{ timezone }}'
       ES_HEAP_SIZE: '{{ elastic.heap_size }}'
@@ -52,22 +92,37 @@
       ELASTIC_PASSWORD: '{{ elastic_password }}'
       # HTTP_PROXY: '{{ http_proxy }}'
       # HTTPS_PROXY: '{{ https_proxy }}'
-    volume:
-      - '{{ elastic_data }}/logs:/usr/share/elasticsearch/logs:z'
-      - '{{ elastic_data }}/data:/usr/share/elasticsearch/data:z'
-      - '{{ elastic_data }}/snapshots:{{ elastic_snapshot_repository }}'
-      - '{{ elastic_config }}/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,z'
-      - '{{ elastic_config }}/config/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties:ro,z'
-      - '{{ elastic_config }}/certs:/usr/share/elasticsearch/config/certificates:ro,z'
-  register: result
-  until: result is success
+  register: 'result'
+  until: 'result is success'
   retries: 3
   delay: 5
   environment: '{{ proxy_env }}'
 
-- name: Hand over pod and container mgmt to systemd
-  vars:
-    container_name: '{{ pod_name }}'
-    type: pod
-  import_role:
-    name: podman_systemd_simple
+- name: 'Ensure systemd user directory exists'
+  file:
+    path: '{{ podman_home }}/.config/systemd/user'
+    state: 'directory'
+    owner: '{{ elastic_user }}'
+    group: '{{ elastic_group }}'
+
+- name: 'Generate systemd units by podman'
+  become_user: '{{ podman_user }}'
+  become: true
+  ansible.builtin.command:
+    cmd: >-
+      podman generate systemd -f -n 
+        -t '{{ elastic_systemd_timeout }}' 
+        '{{ elastic_pod_name }}'
+    chdir: '{{ podman_home }}/.config/systemd/user'
+    creates: 'pod-{{ elastic_pod_name }}.service' # TODO: check if container service is created, too - if paranoid
+
+# todo wait for elastic service to be started
+- name: 'Enable systemd units by podman'
+  become_user: '{{ podman_user }}'
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item }}'
+    scope: 'user'
+    state: 'started'
+  loop:
+    - 'pod-{{ elastic_pod_name }}.service'

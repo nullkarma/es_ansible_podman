@@ -1,14 +1,15 @@
 # ======================== Elasticsearch Configuration =========================
 #
-# NOTE: Elasticsearch comes with reasonable defaults for most settings.
-#       Before you set out to tweak and tune the configuration, make sure you
-#       understand what are you trying to accomplish and the consequences.
+# NOTE: Elasticsearch comes with reasonable defaults for most settings. Before
+# you set out to tweak and tune the configuration, make sure you
+# understand what are you trying to accomplish and the consequences.
 #
 # The primary way of configuring a node is via this file. This template lists
-# the most important settings you may want to configure for a production cluster.
+# the most important settings you may want to configure for a production
+# cluster.
 #
-# Please consult the documentation for further information on configuration options:
-# https://www.elastic.co/guide/en/elasticsearch/reference/index.html
+# Please consult the documentation for further information on configuration
+# options: https://www.elastic.co/guide/en/elasticsearch/reference/index.html
 #
 # ---------------------------------- Cluster -----------------------------------
 #
@@ -34,7 +35,7 @@ network.host: "{{ elastic.ip_address }}"
 # Node configuration
 
 # Configuration options common for all elasticsearch nodes:
-{% if len(groups['elastic_hosts'] == 1) %}
+{% if (groups['elastic_hosts'] | length) == 1 and elastic_host_instances == 1 %}
 discovery.type: "single-node"
 {% else %}
 discovery.seed_hosts:

@@ -7,13 +7,19 @@ http_proxy: ''
 https_proxy: ''
 no_proxy: '127.0.0.1/8'
 
+# domainname
+domainname: '{{ ".".join(ansible_fqdn.split(".")[1:]) }}'
+
 # used by ansible tasks
 proxy_env:
   http_proxy: '{{ http_proxy }}'
   https_proxy: '{{ https_proxy }}'
   no_proxy: '{{ no_proxy }}'
 
-podman_user: 'elastic'
+podman_user: '{{ ansible_user }}'
+podman_home: '/home/{{ ansible_user }}'
+
+elastic_instance_count: '3'
 
 elastic_user: '{{ podman_user }}'
 elastic_conf_dir: '/var/lib/elastic/config'

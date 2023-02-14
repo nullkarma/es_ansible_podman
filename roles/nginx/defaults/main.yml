@@ -1,0 +1,16 @@
+---
+# user and group
+nginx_user: '{{ podman_user }}'
+nginx_group: '{{ nginx_user }}'
+
+# defaults file for systemd
+nginx_systemd_state: 'started'
+nginx_systemd_recreate: false
+nginx_systemd_timeout: '30'
+
+# podman config
+nginx_image: 'docker.io/library/nginx:1.23'
+nginx_pod_name: 'nginx'
+nginx_service_name: 'nginx'
+
+nginx_instance: '0'

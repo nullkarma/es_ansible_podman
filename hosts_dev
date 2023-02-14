@@ -1,5 +1,5 @@
 [elastic_master_nodes]
-server1     ansible_host=192.168.178.59 service_ip=192.168.178.59
+server1     ansible_host=192.168.178.58 service_ip=192.168.178.58
 
 [elastic_hosts:children]
 elastic_master_nodes

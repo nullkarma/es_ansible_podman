@@ -1,7 +1,9 @@
 ---
-- name: 'Install podman package'
+- name: 'Install podman and required packages'
   ansible.builtin.package:
-    name: 'podman'
+    name:
+      - 'podman'
+      - 'acl'
 
 - name: 'Setup registry search list'
   ansible.builtin.copy:
@@ -14,7 +16,7 @@
     name: '{{ podman_group }}'
     system: false
 
-- name: 'Ensure group for podman exists with correct gid'
+- name: 'Ensure user for podman exists with correct gid'
   ansible.builtin.user:
     name: '{{ podman_user }}'
     group: '{{ podman_group }}'
@@ -22,6 +24,13 @@
     home: '{{ podman_home }}'
     password: '!'
     system: false
+
+- name: 'Ensure systemd files directory exists if user not root'
+  file:
+    path: '{{ podman_home }}/.config/systemd/user'
+    state: 'directory'
+    owner: '{{ podman_user }}'
+    group: '{{ podman_group }}'
 
 - name: 'Enable lingering for podman user'
   ansible.builtin.command:
