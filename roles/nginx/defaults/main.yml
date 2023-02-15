@@ -1,6 +1,6 @@
 ---
 # user and group
-nginx_user: '{{ podman_user }}'
+nginx_user: '{{ elastic_user }}'
 nginx_group: '{{ nginx_user }}'
 
 # defaults file for systemd

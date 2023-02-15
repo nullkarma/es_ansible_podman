@@ -1,4 +1,4 @@
 ---
-podman_user: '{{ ansible_user }}'
-podman_group: '{{ podman_user }}'
-podman_home: '/var/lib/{{ podman_user }}'
+elastic_user: '{{ ansible_user }}'
+elastic_group: '{{ elastic_user }}'
+elastic_home: '/var/lib/{{ elastic_user }}'

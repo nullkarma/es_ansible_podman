@@ -30,24 +30,32 @@
 
 - name: 'Ensure systemd user directory exists'
   file:
-    path: '{{ podman_home }}/.config/systemd/user'
+    path: '{{ elastic_home }}/.config/systemd/user'
     state: 'directory'
     owner: '{{ nginx_user }}'
     group: '{{ nginx_group }}'
 
 - name: 'Generate systemd units by podman'
-  become_user: '{{ podman_user }}'
+  become_user: '{{ elastic_user }}'
   become: true
   ansible.builtin.command:
     cmd: >-
       podman generate systemd -f -n 
         -t '{{ nginx_systemd_timeout }}' 
         '{{ nginx_pod_name}}'
-    chdir: '{{ podman_home }}/.config/systemd/user'
+    chdir: '{{ elastic_home }}/.config/systemd/user'
     creates: 'pod-{{ nginx_pod_name }}.service' # TODO: check if container service is created, too - if paranoid
 
+- name: 'Wait for nginx to be started'
+  ansible.builtin.wait_for:
+    host: '{{ ansible_host }}'
+    port: 8080
+    delay: 1
+    state: 'started'
+    timeout: 30
+
 - name: 'Enable systemd units by podman'
-  become_user: '{{ podman_user }}'
+  become_user: '{{ elastic_user }}'
   become: true
   ansible.builtin.systemd:
     name: '{{ item }}'

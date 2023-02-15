@@ -32,7 +32,7 @@ elastic_image_version: '8.6.1'
 elastic_cluster_name: 'example.com'
 
 # number of instances per host
-elastic_host_instances: '3'
+elastic_host_instances: '1'
 
 monitoring_cluster: true
 monitoring_data_history: '3d'

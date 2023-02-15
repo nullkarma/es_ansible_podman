@@ -100,25 +100,25 @@
 
 - name: 'Ensure systemd user directory exists'
   file:
-    path: '{{ podman_home }}/.config/systemd/user'
+    path: '{{ elastic_home }}/.config/systemd/user'
     state: 'directory'
     owner: '{{ elastic_user }}'
     group: '{{ elastic_group }}'
 
 - name: 'Generate systemd units by podman'
-  become_user: '{{ podman_user }}'
+  become_user: '{{ elastic_user }}'
   become: true
   ansible.builtin.command:
     cmd: >-
       podman generate systemd -f -n 
         -t '{{ elastic_systemd_timeout }}' 
         '{{ elastic_pod_name }}'
-    chdir: '{{ podman_home }}/.config/systemd/user'
+    chdir: '{{ elastic_home }}/.config/systemd/user'
     creates: 'pod-{{ elastic_pod_name }}.service' # TODO: check if container service is created, too - if paranoid
 
 # todo wait for elastic service to be started
 - name: 'Enable systemd units by podman'
-  become_user: '{{ podman_user }}'
+  become_user: '{{ elastic_user }}'
   become: true
   ansible.builtin.systemd:
     name: '{{ item }}'
