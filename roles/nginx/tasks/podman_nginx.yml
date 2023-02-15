@@ -22,6 +22,8 @@
     recreate: '{{ nginx_systemd_recreate }}'
     label:
       process: nginx
+    volumes:
+      - /var/lib/elastic/data/server1_0/logs/:/var/logs,rw
   register: result
   until: result is success
   retries: 3

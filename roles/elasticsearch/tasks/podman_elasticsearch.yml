@@ -17,12 +17,27 @@
       {{ elastic_data_dir }}/{{
          inventory_hostname_short }}_{{ elastic_instance_number }}
 
-- name: Create persistent directories for Elasticsearch
+- name: 'Create persistent base directories for Elasticsearch'
   ansible.builtin.file:
     path: '{{ item }}'
     state: directory
     owner: '{{ elastic_user }}'
+    group: '{{ elastic_group }}'
     mode: '0755'
+  loop:
+    - '{{ elastic_data }}'
+    - '{{ elastic_config }}'
+
+- name: 'Create Elasticsearch data directories'
+  become: true
+  become_user: '{{ elastic_user }}'
+  ansible.builtin.command:
+    cmd: >-
+      podman unshare
+        sh -c 'mkdir -p {{ item }} &&
+        chown {{ elastic_container_uid }}:{{ elastic_container_gid }} {{ item }} ||
+        rm -f {{ item }}'
+    creates: '{{ item }}'
   loop:
     - '{{ elastic_data }}/data'
     - '{{ elastic_data }}/logs'
@@ -75,9 +90,9 @@
     label:
       process: 'elasticsearch'
     volume:
-      - '{{ elastic_data }}/logs:/usr/share/elasticsearch/logs:rw'
-      - '{{ elastic_data }}/data:/usr/share/elasticsearch/data:rw'
-      - '{{ elastic_data }}/snapshots:{{ elastic_snapshot_repository }}'
+      - '{{ elastic_data }}/logs:/usr/share/elasticsearch/logs:z,rw'
+      - '{{ elastic_data }}/data:/usr/share/elasticsearch/data:z,rw'
+      - '{{ elastic_data }}/snapshots:{{ elastic_snapshot_repository }}:z,rw'
       - '{{ elastic_config }}/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro'
       - '{{ elastic_config }}/config/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties:ro'
       - '{{ elastic_config }}/certs:/usr/share/elasticsearch/config/certificates:ro'
@@ -114,9 +129,17 @@
         -t '{{ elastic_systemd_timeout }}' 
         '{{ elastic_pod_name }}'
     chdir: '{{ elastic_home }}/.config/systemd/user'
-    creates: 'pod-{{ elastic_pod_name }}.service' # TODO: check if container service is created, too - if paranoid
+    creates: 'pod-{{ elastic_pod_name }}.service'
+    # TODO: check if container service is created, too - if paranoid
 
-# todo wait for elastic service to be started
+- name: 'Wait for nginx to be started'
+  ansible.builtin.wait_for:
+    host: '{{ ansible_host }}'
+    port: '{{ 9200 + elastic_instance_number }}'
+    delay: 1
+    state: 'started'
+    timeout: 60
+
 - name: 'Enable systemd units by podman'
   become_user: '{{ elastic_user }}'
   become: true

@@ -2,13 +2,6 @@
 - name: 'Include task systemsetup.yml'
   ansible.builtin.include_tasks: 'systemsetup.yml'
 
-# # tasks file for elasticsearch
-# - name: Import createdirs
-#   ansible.builtin.include_tasks: 'createdirs.yml'
-
-# - name: Include task generatetemplates.yml
-#   ansible.builtin.include_tasks: 'generatetemplates.yml'
-
 # - name: Include task synccerts.yml
 #   ansible.builtin.include_tasks: 'synccerts.yml'
 

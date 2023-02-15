@@ -27,12 +27,14 @@ elastic_pod_network: 'host'
 # container defaults
 elastic_image: 'docker.elastic.co/elasticsearch/elasticsearch'
 elastic_image_version: '8.6.1'
+elastic_container_uid: '1000'
+elastic_container_gid: '1000'
 
 # cluster settings
 elastic_cluster_name: 'example.com'
 
 # number of instances per host
-elastic_host_instances: '1'
+elastic_host_instances: 1
 
 monitoring_cluster: true
 monitoring_data_history: '3d'
