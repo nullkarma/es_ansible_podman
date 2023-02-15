@@ -52,9 +52,9 @@
   ansible.builtin.wait_for:
     host: '{{ ansible_host }}'
     port: 8080
-    delay: 1
+    delay: 15 # first container start will fail, but hopefully before 15s elapsed
     state: 'started'
-    timeout: 30
+    timeout: 60
 
 - name: 'Enable systemd units by podman'
   become_user: '{{ elastic_user }}'

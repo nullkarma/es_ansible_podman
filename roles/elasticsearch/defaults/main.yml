@@ -89,7 +89,8 @@ xpack_http_ssl_verification_mode: 'certificate'
 # # For the passwords, see the above section.
 # # This is adapted from the official elasticsearch Ansible playbook found here:
 # # https://github.com/elastic/ansible-elasticsearch/blob/master/tasks/xpack/security/elasticsearch-security-native.yml
-es_api_scheme: 'https'
+#es_api_scheme: 'https'
+es_api_scheme: 'http'
 es_api_host: '{{ hostvars[inventory_hostname]["service_ip"] }}'
 es_api_port: '{{ elastic.ports[0] }}'
 es_api_uri: '{{ es_api_scheme }}://{{ es_api_host }}:{{ es_api_port }}'

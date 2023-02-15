@@ -1,6 +1,8 @@
 ---
-# variables needed
-# elastic_instance_number
+# variables needed:
+#
+# - elastic_instance_number
+#
 - name: 'Set variable names for elastic pods'
   ansible.builtin.set_fact:
     elastic_pod_name: >-
@@ -46,7 +48,7 @@
     - '{{ elastic_config }}/config'
 
 - name: Generate elasticsearch.yml for node
-  template:
+  ansible.builtin.template:
     src: '{{ item }}.j2'
     dest: '{{ elastic_config }}/config/{{ item }}'
     mode: '0644'
@@ -56,14 +58,12 @@
     - elasticsearch.yml
 
 - name: 'Place elasticsearch logging config into the config directory'
-  copy:
-    src: '{{ item }}'
-    dest: '{{ elastic_config }}/config/{{ item }}'
+  ansible.builtin.copy:
+    src: 'log4j2.properties'
+    dest: '{{ elastic_config }}/config/'
     mode: '0644'
     owner: '{{ elastic_user }}'
     group: '{{ elastic_group }}'
-  loop:
-    - log4j2.properties
 
 - name: 'Create pod for elasticsearch'
   become: true
@@ -114,8 +114,8 @@
   environment: '{{ proxy_env }}'
 
 - name: 'Ensure systemd user directory exists'
-  file:
-    path: '{{ elastic_home }}/.config/systemd/user'
+  ansible.builtin.file:
+    path: '{{ elastic_home }}/.config/systemd/user/default.target.wants'
     state: 'directory'
     owner: '{{ elastic_user }}'
     group: '{{ elastic_group }}'
@@ -132,22 +132,32 @@
     creates: 'pod-{{ elastic_pod_name }}.service'
     # TODO: check if container service is created, too - if paranoid
 
-- name: 'Wait for Elasticsearch to be started'
-  ansible.builtin.wait_for:
-    host: '{{ ansible_host }}'
-    port: '{{ 9200 + elastic_instance_number }}'
-    delay: 1
-    state: 'started'
-    timeout: 60
+# Enabling via systemd --user was unreliable so just make link
+- name: 'Enable systemd autostart for Elastiksearch pod'
+  ansible.builtin.file:
+    src: >-
+      {{ elastic_home }}/.config/systemd/user/pod-{{ 
+         elastic_pod_name }}.service
+    dest: >-
+      {{ elastic_home }}/.config/systemd/user/default.target.wants/pod-{{
+         elastic_pod_name }}.service
+    state: 'link'
+    owner: '{{ elastic_user }}'
+    group: '{{ elastic_group }}'
+# - name: 'Wait for Elasticsearch to be started'
+#   ansible.builtin.wait_for:
+#     host: '{{ ansible_host }}'
+#     port: '{{ 9200 + elastic_instance_number }}'
+#     delay: 15 # expect first container start to fail
+#     state: 'started'
+#     timeout: 60
 
-  # TODO: sleep a little while
-
-- name: 'Enable systemd units by podman'
-  become_user: '{{ elastic_user }}'
-  become: true
-  ansible.builtin.systemd:
-    name: '{{ item }}'
-    scope: 'user'
-    state: 'started'
-  loop:
-    - 'pod-{{ elastic_pod_name }}.service'
+# - name: 'Enable systemd units by podman'
+#   become_user: '{{ elastic_user }}'
+#   become: true
+#   ansible.builtin.systemd:
+#     name: '{{ item }}'
+#     scope: 'user'
+#     state: 'started'
+#   loop:
+#     - 'pod-{{ elastic_pod_name }}.service'
