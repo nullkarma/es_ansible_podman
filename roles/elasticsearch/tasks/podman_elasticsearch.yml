@@ -132,13 +132,15 @@
     creates: 'pod-{{ elastic_pod_name }}.service'
     # TODO: check if container service is created, too - if paranoid
 
-- name: 'Wait for nginx to be started'
+- name: 'Wait for Elasticsearch to be started'
   ansible.builtin.wait_for:
     host: '{{ ansible_host }}'
     port: '{{ 9200 + elastic_instance_number }}'
     delay: 1
     state: 'started'
     timeout: 60
+
+  # TODO: sleep a little while
 
 - name: 'Enable systemd units by podman'
   become_user: '{{ elastic_user }}'
