@@ -26,11 +26,12 @@
     system: false
 
 - name: 'Ensure systemd files directory exists if user not root'
-  file:
+  ansible.builtin.file:
     path: '{{ podman_home }}/.config/systemd/user'
     state: 'directory'
     owner: '{{ podman_user }}'
     group: '{{ podman_group }}'
+    mode: '0750'
 
 - name: 'Enable lingering for podman user'
   ansible.builtin.command:

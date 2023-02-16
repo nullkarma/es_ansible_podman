@@ -118,8 +118,8 @@
   become: true
   ansible.builtin.command:
     cmd: >-
-      podman generate systemd -f -n 
-        -t '{{ elastic_systemd_timeout }}' 
+      podman generate systemd -f -n
+        -t '{{ elastic_systemd_timeout }}'
         '{{ elastic_pod_name }}'
     chdir: '{{ elastic_home }}/.config/systemd/user'
     creates: 'pod-{{ elastic_pod_name }}.service'
@@ -129,7 +129,7 @@
 - name: 'Enable systemd autostart for Elastiksearch pod'
   ansible.builtin.file:
     src: >-
-      {{ elastic_home }}/.config/systemd/user/pod-{{ 
+      {{ elastic_home }}/.config/systemd/user/pod-{
          elastic_pod_name }}.service
     dest: >-
       {{ elastic_home }}/.config/systemd/user/default.target.wants/pod-{{

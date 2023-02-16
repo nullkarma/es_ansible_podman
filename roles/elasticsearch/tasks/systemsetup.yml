@@ -9,7 +9,7 @@
   notify: 'Reload sysctl'
 
 - name: Setup elastic user limits
-  ansible.builtin.pam_limits:
+  community.general.pam_limits:
     domain: '{{ elastic_user }}'
     limit_type: '{{ item[0] }}'
     limit_item: '{{ item[1] }}'

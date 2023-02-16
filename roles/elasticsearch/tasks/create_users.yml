@@ -1,24 +1,24 @@
 ---
-- name: Include custom roles from inventory
-  set_fact:
+- name: 'Include custom roles from inventory'
+  ansible.builtin.set_fact:
     es_roles: '{{ es_roles | combine(es_roles_custom, recursive=True) }}'
   when: es_roles_custom is defined
 
-- name: Include custom users from inventory
-  set_fact:
+- name: 'Include custom users from inventory'
+  ansible.builtin.set_fact:
     es_users: '{{ es_users | combine(es_users_custom, recursive=True) }}'
   when: es_users_custom is defined
 
-- name: Wait for Elasticsearch API to be available (timeout 300 sec)
-  wait_for:
+- name: 'Wait for Elasticsearch API to be available (timeout 300 sec)'
+  ansible.builtin.wait_for:
     host: '{{ es_api_host }}'
     port: 9200
     delay: 30
-    state: started
+    state: 'started'
     timeout: 300
 
-- name: Wait for cluster state to be YELLOW or GREEN (timeout 300 sec)
-  uri:
+- name: 'Wait for cluster state to be YELLOW or GREEN (timeout 300 sec)'
+  ansible.builtin.uri:
     url: '{{ es_api_uri }}/_cat/health'
     return_content: true
     validate_certs: '{{ es_validate_certs }}'
@@ -26,7 +26,10 @@
     password: '{{ es_api_basic_auth_password }}'
     force_basic_auth: true
   register: response
-  until: "'red' not in response.content and ((response.content.find('yellow') != -1) or (response.content.find('green') != -1))"
+  until: >-
+    'red' not in response.content
+    and ((response.content.find('yellow') != -1)
+         or (response.content.find('green') != -1))
   delay: 5
   retries: 60
 
@@ -34,4 +37,4 @@
   ansible.builtin.include_tasks:
     file: 'elasticsearch-security-native.yml'
     apply:
-      tags: security
+      tags: 'security'

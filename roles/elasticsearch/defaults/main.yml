@@ -93,7 +93,7 @@ xpack_http_ssl_verification_mode: 'certificate'
 # # For the passwords, see the above section.
 # # This is adapted from the official elasticsearch Ansible playbook found here:
 # # https://github.com/elastic/ansible-elasticsearch/blob/master/tasks/xpack/security/elasticsearch-security-native.yml
-#es_api_scheme: 'https'
+# es_api_scheme: 'https'
 es_api_scheme: 'http'
 es_api_host: '{{ hostvars[inventory_hostname]["service_ip"] }}'
 es_api_port: '{{ elastic.ports[0] }}'
@@ -101,8 +101,8 @@ es_api_uri: '{{ es_api_scheme }}://{{ es_api_host }}:{{ es_api_port }}'
 es_api_sleep: 15
 es_security_api: '_security'
 es_validate_certs: false
-es_api_basic_auth_username: '{{elastic_elastic_user}}'
-es_api_basic_auth_password: '{{elastic_password}}'
+es_api_basic_auth_username: '{{ elastic_elastic_user }}'
+es_api_basic_auth_password: '{{ elastic_password }}'
 es_delete_unmanaged_file: true
 es_delete_unmanaged_native: true
 

@@ -11,6 +11,7 @@
     state: 'directory'
     owner: '{{ elastic_user }}'
     group: '{{ elastic_group }}'
+    mode: '0750'
 
 - name: Include task elastic_stack_podman.yml
   ansible.builtin.include_tasks: 'podman_elasticsearch.yml'
