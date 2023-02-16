@@ -25,7 +25,7 @@
     state: directory
     owner: '{{ elastic_user }}'
     group: '{{ elastic_group }}'
-    mode: '0755'
+    mode: '0750'
   loop:
     - '{{ elastic_data }}'
     - '{{ elastic_config }}'
@@ -51,7 +51,7 @@
   ansible.builtin.template:
     src: '{{ item }}.j2'
     dest: '{{ elastic_config }}/config/{{ item }}'
-    mode: '0644'
+    mode: '0640'
     owner: '{{ elastic_user }}'
     group: '{{ elastic_group }}'
   loop:
@@ -61,7 +61,7 @@
   ansible.builtin.copy:
     src: 'log4j2.properties'
     dest: '{{ elastic_config }}/config/'
-    mode: '0644'
+    mode: '0640'
     owner: '{{ elastic_user }}'
     group: '{{ elastic_group }}'
 
@@ -112,13 +112,6 @@
   retries: 3
   delay: 5
   environment: '{{ proxy_env }}'
-
-- name: 'Ensure systemd user directory exists'
-  ansible.builtin.file:
-    path: '{{ elastic_home }}/.config/systemd/user/default.target.wants'
-    state: 'directory'
-    owner: '{{ elastic_user }}'
-    group: '{{ elastic_group }}'
 
 - name: 'Generate systemd units by podman'
   become_user: '{{ elastic_user }}'

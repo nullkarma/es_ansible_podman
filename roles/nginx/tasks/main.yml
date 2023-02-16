@@ -1,3 +1,67 @@
 ---
-- name: 'Include task podman_nginx.yml'
-  ansible.builtin.include_tasks: 'podman_nginx.yml'
+- name: 'Create pod for nginx'
+  become: true
+  become_user: '{{ nginx_user }}'
+  containers.podman.podman_pod:
+    name: '{{ nginx_pod_name }}'
+    hostname: '{{ inventory_hostname_short }}.{{ domainname }}'
+    state: '{{ nginx_systemd_state }}'
+    recreate: '{{ nginx_systemd_recreate }}'
+    publish:
+      - '8080:80'
+
+- name: 'Run nginx container'
+  become: true
+  become_user: '{{ nginx_user }}'
+  containers.podman.podman_container:
+    name: '{{ nginx_service_name }}-{{ nginx_instance }}'
+    pod: '{{ nginx_pod_name }}'
+    image: '{{ nginx_image }}'
+    state: 'started'
+    stop_timeout: 90
+    recreate: '{{ nginx_systemd_recreate }}'
+    label:
+      process: nginx
+    volumes:
+      - /var/lib/elastic/data/server1_0/logs/:/var/logs,rw
+  register: result
+  until: result is success
+  retries: 3
+  delay: 5
+  environment: '{{ proxy_env }}'
+
+- name: 'Ensure systemd user directory exists'
+  file:
+    path: '{{ nginx_home }}/.config/systemd/user'
+    state: 'directory'
+    owner: '{{ nginx_user }}'
+    group: '{{ nginx_group }}'
+
+- name: 'Generate systemd units by podman'
+  become_user: '{{ nginx_user }}'
+  become: true
+  ansible.builtin.command:
+    cmd: >-
+      podman generate systemd -f -n 
+        -t '{{ nginx_systemd_timeout }}' 
+        '{{ nginx_pod_name}}'
+    chdir: '{{ nginx_home }}/.config/systemd/user'
+    creates: 'pod-{{ nginx_pod_name }}.service' # TODO: check if container service is created, too - if paranoid
+
+- name: 'Wait for nginx to be started'
+  ansible.builtin.wait_for:
+    host: '{{ ansible_host }}'
+    port: 8080
+    delay: 1
+    state: 'started'
+    timeout: 60
+
+- name: 'Enable systemd units by podman'
+  become_user: '{{ nginx_user }}'
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item }}'
+    scope: 'user'
+    state: 'started'
+  loop:
+    - 'pod-{{ nginx_pod_name }}.service'

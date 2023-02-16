@@ -13,26 +13,26 @@
 
 - name: 'Ensure group for podman exists'
   ansible.builtin.group:
-    name: '{{ elastic_group }}'
+    name: '{{ podman_group }}'
     system: false
 
 - name: 'Ensure user for podman exists with correct gid'
   ansible.builtin.user:
-    name: '{{ elastic_user }}'
-    group: '{{ elastic_group }}'
+    name: '{{ podman_user }}'
+    group: '{{ podman_group }}'
     create_home: true
-    home: '{{ elastic_home }}'
+    home: '{{ podman_home }}'
     password: '!'
     system: false
 
 - name: 'Ensure systemd files directory exists if user not root'
   file:
-    path: '{{ elastic_home }}/.config/systemd/user'
+    path: '{{ podman_home }}/.config/systemd/user'
     state: 'directory'
-    owner: '{{ elastic_user }}'
-    group: '{{ elastic_group }}'
+    owner: '{{ podman_user }}'
+    group: '{{ podman_group }}'
 
 - name: 'Enable lingering for podman user'
   ansible.builtin.command:
-    cmd: 'loginctl enable-linger {{ elastic_user }}'
-    creates: '/var/lib/systemd/linger/{{ elastic_user }}'
+    cmd: 'loginctl enable-linger {{ podman_user }}'
+    creates: '/var/lib/systemd/linger/{{ podman_user }}'

@@ -1,7 +1,8 @@
 ---
 # user and group
-nginx_user: '{{ elastic_user }}'
+nginx_user: '{{ ansible_user }}'
 nginx_group: '{{ nginx_user }}'
+nginx_home: '{{ ("/home", nginx_user) | path_join }}'
 
 # defaults file for systemd
 nginx_systemd_state: 'started'

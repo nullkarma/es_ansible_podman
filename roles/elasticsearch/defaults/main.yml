@@ -1,7 +1,11 @@
 ---
-# user and group
-elastic_user: 'elastic'
+# user, group and pathes
+elastic_user: '{{ ansible_user }}'
 elastic_group: '{{ elastic_user }}'
+elastic_home: '{{ ("/home", elastic_user) | path_join }}'
+
+elastic_conf_dir: '/var/lib/elastic/config'
+elastic_data_dir: '/var/lib/elastic/data'
 
 # pam limits for elastic user
 elastic_system_limits:

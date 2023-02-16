@@ -18,10 +18,5 @@ proxy_env:
 
 elastic_instance_count: '3'
 
-elastic_user: '{{ ansible_user }}'
-elastic_group: '{{ elastic_user }}'
-elastic_home: '/home/{{ ansible_user }}'
-elastic_conf_dir: '/var/lib/elastic/config'
-elastic_data_dir: '/var/lib/elastic/data'
 vault_xpack_http_ssl_keystore_password: ''
 vault_xpack_transport_ssl_keystore_password: ''

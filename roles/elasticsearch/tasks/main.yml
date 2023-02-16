@@ -5,6 +5,13 @@
 # - name: Include task synccerts.yml
 #   ansible.builtin.include_tasks: 'synccerts.yml'
 
+- name: 'Ensure systemd user directory exists'
+  ansible.builtin.file:
+    path: '{{ elastic_home }}/.config/systemd/user/default.target.wants'
+    state: 'directory'
+    owner: '{{ elastic_user }}'
+    group: '{{ elastic_group }}'
+
 - name: Include task elastic_stack_podman.yml
   ansible.builtin.include_tasks: 'podman_elasticsearch.yml'
   loop: '{{ range(elastic_host_instances | int) | list }}'

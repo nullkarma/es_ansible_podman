@@ -1,0 +1,8 @@
+---
+
+- name: 'Elastic nginx'
+  hosts: kibana_hosts
+  become: true
+  roles:
+   - 'kibana'
+

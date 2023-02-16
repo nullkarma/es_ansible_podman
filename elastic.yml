@@ -6,3 +6,9 @@
   roles:
    - 'elasticsearch'
 
+
+- name: 'Elastic search stack'
+  hosts: ['kibana_hosts']
+  become: true
+  roles:
+   - 'kibana'

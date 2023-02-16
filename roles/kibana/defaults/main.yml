@@ -1,0 +1,17 @@
+---
+# user and group
+kibana_user: '{{ ansible_user }}'
+kibana_group: '{{ kibana_user }}'
+kibana_home: '{{ ("/home", kibana_user) | path_join }}'
+
+kibana_conf_dir: '/var/lib/kibana/conf'
+
+# defaults file for systemd
+kibana_systemd_state: 'started'
+kibana_systemd_recreate: false
+kibana_systemd_timeout: '30'
+
+# podman config
+kibana_image: 'docker.elastic.co/kibana/kibana:8.6.1'
+kibana_pod_name: 'kibana'
+kibana_service_name: 'kibana'

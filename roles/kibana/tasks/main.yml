@@ -1,0 +1,79 @@
+---
+- name: 'Create persistent directories for Kibana'
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: directory
+    owner: '{{ kibana_user }}'
+    group: '{{ kibana_group }}'
+    mode: '0750'
+  loop:
+    - '{{ kibana_conf_dir }}'
+    - '{{ kibana_home }}/.config/systemd/user/default.target.wants'
+
+- name: 'Render kibana.yml config'
+  ansible.builtin.template:
+    src: 'kibana.yml.j2'
+    dest: '{{ (kibana_conf_dir, "kibana.yml") | path_join }}'
+    mode: '0640'
+    owner: '{{ kibana_user }}'
+    group: '{{ kibana_group }}'
+
+- name: 'Create pod for kibana'
+  become: true
+  become_user: '{{ kibana_user }}'
+  containers.podman.podman_pod:
+    name: '{{ kibana_pod_name }}'
+    hostname: '{{ inventory_hostname_short }}.{{ domainname }}'
+    state: '{{ kibana_systemd_state }}'
+    recreate: '{{ kibana_systemd_recreate }}'
+    publish:
+      - '5601:5601'
+
+- name: 'Run kibana container'
+  become: true
+  become_user: '{{ kibana_user }}'
+  containers.podman.podman_container:
+    name: '{{ kibana_service_name }}'
+    pod: '{{ kibana_pod_name }}'
+    image: '{{ kibana_image }}'
+    state: 'started'
+    stop_timeout: 90
+    recreate: '{{ kibana_systemd_recreate }}'
+    label:
+      process: kibana
+    volumes:
+      - '{{ kibana_conf_dir }}/kibana.yml:/usr/share/kibana/config/kibana.yml'
+  register: result
+  until: result is success
+  retries: 3
+  delay: 5
+  environment: '{{ proxy_env }}'
+
+- name: 'Generate systemd units by podman'
+  become: true
+  become_user: '{{ kibana_user }}'
+  ansible.builtin.command:
+    cmd: >-
+      podman generate systemd -f -n 
+        -t '{{ kibana_systemd_timeout }}' 
+        '{{ kibana_pod_name}}'
+    chdir: '{{ kibana_home }}/.config/systemd/user'
+    creates: 'pod-{{ kibana_pod_name }}.service' # TODO: check if container service is created, too - if paranoid
+
+- name: 'Wait for kibana to be started'
+  ansible.builtin.wait_for:
+    host: '{{ ansible_host }}'
+    port: 5601
+    delay: 1
+    state: 'started'
+    timeout: 30
+
+- name: 'Enable systemd units by podman'
+  become_user: '{{ kibana_user }}'
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item }}'
+    scope: 'user'
+    state: 'started'
+  loop:
+    - 'pod-{{ kibana_pod_name }}.service'

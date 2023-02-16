@@ -35,7 +35,7 @@
   check_mode: false
 
 - name: set fact reserved_users equals user_list_response.json
-  set_fact: reserved_users={{ user_list_response.json | abalage.elasticstack_podman.filter_reserved }}
+  set_fact: reserved_users={{ user_list_response.json | filter_reserved }}
   when: manage_native_users
 
 # Current users not inc. those reserved
@@ -149,7 +149,7 @@
   check_mode: false
 
 - name: Set fact reserved roles
-  set_fact: reserved_roles={{ role_list_response.json | abalage.elasticstack_podman.filter_reserved }}
+  set_fact: reserved_roles={{ role_list_response.json | filter_reserved }}
   when: manage_native_roles
 
 - name: Set fact current roles

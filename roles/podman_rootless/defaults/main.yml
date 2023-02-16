@@ -1,4 +1,4 @@
 ---
-elastic_user: '{{ ansible_user }}'
-elastic_group: '{{ elastic_user }}'
-elastic_home: '/var/lib/{{ elastic_user }}'
+podman_user: '{{ ansible_user }}'
+podman_group: '{{ podman_user }}'
+podman_home: '{{ ("/home", podman_user) | path_join }}'
